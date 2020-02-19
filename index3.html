@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Power Grid Map</title>
+	<script src='https://api.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.js'></script>
+	<link href='https://api.mapbox.com/mapbox-gl-js/v1.7.0/mapbox-gl.css' rel='stylesheet' />
+</head>
+<style type="text/css">
+	#map {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+	}
+</style>
+<body>
+	<button id='netbutton' onclick='netbutton()'>Nodes and Links</button>
+	<button id='statebutton' onclick='statebutton()'>States</button>
+	<button id='binbutton'>Bins</button>
+	<hr>
+	<div id="map" style="width: 1000px; height: 800px;"></div>
+</body>
+	<script type="text/javascript">
+
+		// Access Token
+		mapboxgl.accessToken = 'pk.eyJ1IjoiamFnb2R3aW4iLCJhIjoiY2lnOGQxaDhiMDZzMXZkbHYzZmN4ZzdsYiJ9.Uwh_L37P-qUoeC-MBSDteA';
+
+		// Coordinates of AU
+		var au = [-77.106342, 38.956379];
+
+		// Create Mapboxgl object with center, zoom values, and tile style
+		var map = new mapboxgl.Map({
+			container: 'map',
+			center: au,
+			maxZoom: 10,
+			minZoom: 3,
+			zoom: 7,
+			style: 'mapbox://styles/mapbox/light-v10'
+		})
+
+		// Get Mapbox map canvas container
+		var canvas = map.getCanvasContainer();
+
+		var nodeFeatures = [];
+
+		var netVisibility = true;
+		var stateVisibility = true;
+
+			map.on('load', function() {
+				map.addSource('AmStates', {
+					'type': 'geojson',
+					'data': 'data/chorostates.json'
+				});
+
+				map.addLayer({
+					'id': 'AmStates-fill',
+					'type': 'fill',
+					'source': 'AmStates',
+					'paint': {
+						'fill-color': {
+							"property": "count",
+							"stops": [
+								[0, "yellow"],
+								[100, "red"]
+							]
+						},
+        				'fill-opacity': 0.4
+					}
+				})
+
+				map.addLayer({
+					'id': 'AmStates-line',
+					'type': 'line',
+					'source': 'AmStates',
+					'paint': {
+						'line-color':'rgb(100,100,255)'
+					}
+				})
+
+				map.addSource('AmLinks', {
+					'type': 'geojson',
+					'data':'data/AmLinks.geojson'
+				});
+
+				map.addLayer({
+					'id': 'AmLinks',
+					'type': 'line',
+					'source': 'AmLinks',
+					'layout': {
+						'line-join': 'round',
+						'line-cap': 'round'
+					},
+						'paint': {
+						'line-color': '#888',
+						'line-width': 1,
+						'line-opacity': 0.5
+
+					}
+				})
+
+				map.addSource('AmNodes', {
+					'type': 'geojson',
+					'data': 'data/gridkit_north_america-highvoltage-vertices.geojson'
+				});
+
+				map.addLayer({
+					'id': 'AmNodes',
+					'type': 'circle',
+					'source': 'AmNodes',
+					'paint': {
+						'circle-radius': 2,
+						'circle-opacity': 0.6,
+						'circle-color': [
+							'match',
+							['get', 'typ'],
+							'joint',
+							'#fbb03b',
+							'substation',
+							'#223b53',
+							'sub-station',
+							'#223b53',
+							'station',
+							'#e55e5e',
+							'merge',
+							'#3bb2d0',
+							'plant',
+							'#69b362',
+							/* other */ '#ccc'
+						]
+					}
+				});
+			});
+		
+		function netbutton() {
+			if (netVisibility) {
+				map.setLayoutProperty('AmLinks', 'visibility', 'none');
+				map.setLayoutProperty('AmNodes', 'visibility', 'none');
+			} else {
+				map.setLayoutProperty('AmLinks', 'visibility', 'visible');
+				map.setLayoutProperty('AmNodes', 'visibility', 'visible');
+			}
+			netVisibility = !netVisibility;
+		}
+
+		function statebutton() {
+			if (stateVisibility) {
+				map.setLayoutProperty('AmStates-fill', 'visibility', 'none');
+			} else {
+				map.setLayoutProperty('AmStates-fill', 'visibility', 'visible');
+			}
+			stateVisibility = !stateVisibility;
+		}
+
+	</script>
+</html>
